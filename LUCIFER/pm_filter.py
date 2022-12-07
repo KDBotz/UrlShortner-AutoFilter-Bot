@@ -9,21 +9,22 @@ import pyrogram
 from database.connections_mdb import active_connection, all_connections, delete_connection, if_active, make_active, \
     make_inactive
 from info import ADMINS, AUTH_CHANNEL, AUTH_USERS, CUSTOM_FILE_CAPTION, MSG_ALRT, AUTH_GROUPS, P_TTI_SHOW_OFF, GRP_LNK, CHNL_LNK, NOR_IMG, SPELL_IMG, IMDB, \
-    SINGLE_BUTTON, SPELL_CHECK_REPLY, IMDB_TEMPLATE, SUPPORT_GROUP, SUPPORT_CHAT, HOW_DWLD_LINK, DELETE_TIME, SPL_DELETE_TIME
+    SINGLE_BUTTON, SPELL_CHECK_REPLY, IMDB_TEMPLATE, SUPPORT_GROUP, SUPPORT_CHAT, HOW_DWLD_LINK, DELETE_TIME, SPL_DELETE_TIME, AUTH_GROUPS
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from pyrogram import Client, filters, enums
 from pyrogram.errors import FloodWait, UserIsBlocked, MessageNotModified, PeerIdInvalid
-from utils import get_size, is_subscribed, get_poster, search_gagala, temp, get_settings, save_group_settings, get_shortlink
+from utils import get_size, is_subscribed, get_poster, temp, get_settings, save_group_settings, get_shortlink
 from database.users_chats_db import db
 from database.ia_filterdb import Media, get_file_details, get_search_results
 from database.filters_mdb import (
     del_all,
     find_filter,
-    get_filters,
+    get_filters
 )
 from database.gfilters_mdb import (
+    del_allg,
     find_gfilter,
-    get_gfilters,
+    get_gfilters
 )
 import logging
 
@@ -39,7 +40,7 @@ async def pv_filter(client, message):
     if kd == False:
         await auto_filter(client, message)
 
-@Client.on_message(filters.group & filters.text & filters.incoming)
+@Client.on_message(filters.group & filters.text & filters.incoming & filters.chat(AUTH_GROUPS) if AUTH_GROUPS else filters.group & filters.text & filters.incoming)
 async def give_filter(client, message):
     await global_filters(client, message)
     mf = await manual_filters(client, message)
@@ -78,7 +79,6 @@ async def next_page(bot, query):
     if not files:
         return
     settings = await get_settings(query.message.chat.id)
-    reqnxt  = query.from_user.id if query.from_user else 0
     if settings['button']:
         btn = [
             [
@@ -207,6 +207,15 @@ async def cb_handler(client: Client, query: CallbackQuery):
             await query.message.reply_to_message.delete()
         except:
             pass
+    elif query.data == "gfiltersdeleteallconfirm":
+        await del_allg(query.message, 'gfilters')
+        await query.answer("Done !")
+        return
+    elif query.data == "gfiltersdeleteallcancel": 
+        await query.message.reply_to_message.delete()
+        await query.message.delete()
+        await query.answer("Process Cancelled !")
+        return
     elif query.data == "delallconfirm":
         userid = query.from_user.id
         chat_type = query.message.chat.type
@@ -219,11 +228,11 @@ async def cb_handler(client: Client, query: CallbackQuery):
                     chat = await client.get_chat(grpid)
                     title = chat.title
                 except:
-                    await query.message.edit_text("Make sure I'm present in your group!!", quote=True)
+                    await query.message.edit_text("Mᴀᴋᴇ sᴜʀᴇ I'ᴍ ᴘʀᴇsᴇɴᴛ ɪɴ ʏᴏᴜʀ ɢʀᴏᴜᴘ!!", quote=True)
                     return await query.answer(MSG_ALRT)
             else:
                 await query.message.edit_text(
-                    "I'm not connected to any groups!\nCheck /connections or connect to any groups",
+                    "I'ᴍ ɴᴏᴛ ᴄᴏɴɴᴇᴄᴛᴇᴅ ᴛᴏ ᴀɴʏ ɢʀᴏᴜᴘs!\nCʜᴇᴄᴋ /connections ᴏʀ ᴄᴏɴɴᴇᴄᴛ ᴛᴏ ᴀɴʏ ɢʀᴏᴜᴘs",
                     quote=True
                 )
                 return await query.answer(MSG_ALRT)
@@ -239,7 +248,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         if (st.status == enums.ChatMemberStatus.OWNER) or (str(userid) in ADMINS):
             await del_all(query.message, grp_id, title)
         else:
-            await query.answer("You need to be Group Owner or an Auth User to do that!", show_alert=True)
+            await query.answer("Yᴏᴜ ɴᴇᴇᴅ ᴛᴏ ʙᴇ Gʀᴏᴜᴘ Oᴡɴᴇʀ ᴏʀ ᴀɴ Aᴜᴛʜ Usᴇʀ ᴛᴏ ᴅᴏ ᴛʜᴀᴛ!", show_alert=True)
     elif query.data == "delallcancel":
         userid = query.from_user.id
         chat_type = query.message.chat.type
@@ -258,7 +267,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 except:
                     pass
             else:
-                await query.answer("That's not for you!!", show_alert=True)
+                await query.answer("Tʜᴀᴛ's ɴᴏᴛ ғᴏʀ ʏᴏᴜ!!", show_alert=True)
     elif "groupcb" in query.data:
         await query.answer()
 
@@ -307,7 +316,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 parse_mode=enums.ParseMode.MARKDOWN
             )
         else:
-            await query.message.edit_text('Some error occurred!!', parse_mode=enums.ParseMode.MARKDOWN)
+            await query.message.edit_text('Sᴏᴍᴇ ᴇʀʀᴏʀ ᴏᴄᴄᴜʀʀᴇᴅ!!', parse_mode=enums.ParseMode.MARKDOWN)
         return await query.answer(MSG_ALRT)
     elif "disconnect" in query.data:
         await query.answer()
@@ -323,12 +332,12 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
         if mkinact:
             await query.message.edit_text(
-                f"Disconnected from **{title}**",
+                f"Dɪsᴄᴏɴɴᴇᴄᴛᴇᴅ ғʀᴏᴍ **{title}**",
                 parse_mode=enums.ParseMode.MARKDOWN
             )
         else:
             await query.message.edit_text(
-                f"Some error occurred!!",
+                f"Sᴏᴍᴇ ᴇʀʀᴏʀ ᴏᴄᴄᴜʀʀᴇᴅ!!",
                 parse_mode=enums.ParseMode.MARKDOWN
             )
         return await query.answer(MSG_ALRT)
@@ -342,11 +351,11 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
         if delcon:
             await query.message.edit_text(
-                "Successfully deleted connection"
+                "Sᴜᴄᴄᴇssғᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ ᴄᴏɴɴᴇᴄᴛɪᴏɴ !"
             )
         else:
             await query.message.edit_text(
-                f"Some error occurred!!",
+                f"Sᴏᴍᴇ ᴇʀʀᴏʀ ᴏᴄᴄᴜʀʀᴇᴅ!!",
                 parse_mode=enums.ParseMode.MARKDOWN
             )
         return await query.answer(MSG_ALRT)
@@ -358,7 +367,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         groupids = await all_connections(str(userid))
         if groupids is None:
             await query.message.edit_text(
-                "There are no active connections!! Connect to some groups first.",
+                "Tʜᴇʀᴇ ᴀʀᴇ ɴᴏ ᴀᴄᴛɪᴠᴇ ᴄᴏɴɴᴇᴄᴛɪᴏɴs!! Cᴏɴɴᴇᴄᴛ ᴛᴏ sᴏᴍᴇ ɢʀᴏᴜᴘs ғɪʀsᴛ.",
             )
             return await query.answer(MSG_ALRT)
         buttons = []
@@ -379,7 +388,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 pass
         if buttons:
             await query.message.edit_text(
-                "Your connected group details ;\n\n",
+                "Yᴏᴜʀ ᴄᴏɴɴᴇᴄᴛᴇᴅ ɢʀᴏᴜᴘ ᴅᴇᴛᴀɪʟs ;\n\n",
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
     elif "alertmessage" in query.data:
@@ -393,9 +402,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
             alert = alert.replace("\\n", "\n").replace("\\t", "\t")
             await query.answer(alert, show_alert=True)
     if query.data.startswith("file"):
-        ident, req, file_id = query.data.split("#")
-        if int(req) != 0 and query.from_user.id != int(req):
-            return await query.answer(script.ALRT_TXT, show_alert=True)
+        ident, file_id = query.data.split("#")
         files_ = await get_file_details(file_id)
         if not files_:
             return await query.answer('No such file exist.')
@@ -452,7 +459,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         ident, file_id = query.data.split("#")
         files_ = await get_file_details(file_id)
         if not files_:
-            return await query.answer('No such file exist.')
+            return await query.answer('Nᴏ sᴜᴄʜ ғɪʟᴇ ᴇxɪsᴛ.')
         files = files_[0]
         title = files.file_name
         size = get_size(files.file_size)
@@ -561,7 +568,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         ],[
             InlineKeyboardButton('Rᴇᴘᴏʀᴛ Bᴜɢs & Fᴇᴇᴅʙᴀᴄᴋ', url=GRP_LNK)
         ],[
-            InlineKeyboardButton('Cʜᴀɴɴᴇʟ', url=CHNL_LNK)
+            InlineKeyboardButton('Hᴏᴡ Tᴏ Dᴏᴡɴʟᴏᴀᴅ', url=HOW_DWLD_LINK)
         ],[
             InlineKeyboardButton('Hᴏᴍᴇ', callback_data='start'),
             InlineKeyboardButton('Cʟᴏsᴇ', callback_data='close_data')
@@ -848,7 +855,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
                 ],
                 [
                     InlineKeyboardButton('Fɪʟᴇ Mᴏᴅᴇ', callback_data=f'setgs#botpm#{settings["botpm"]}#{str(grp_id)}'),
-                    InlineKeyboardButton('Sᴛᴀʀᴛ' if settings["botpm"] else 'Cʜᴀɴɴᴇʟ',
+                    InlineKeyboardButton('Sᴛᴀʀᴛ' if settings["botpm"] else 'Aᴜᴛᴏ Sᴇɴᴅ',
                                          callback_data=f'setgs#botpm#{settings["botpm"]}#{str(grp_id)}')
                 ],
                 [
@@ -921,7 +928,6 @@ async def auto_filter(client, msg, spoll=False):
         message = msg.message.reply_to_message  # msg will be callback query
         search, files, offset, total_results = spoll
     pre = 'filep' if settings['file_secure'] else 'file'
-    req = message.from_user.id if message.from_user else 0
     if settings["button"] and msg.chat.id not in filters.chat(chats=SUPPORT_GROUP):
         btn = [
             [
@@ -932,7 +938,7 @@ async def auto_filter(client, msg, spoll=False):
             ]
             for file in files
         ]
-    elif msg.chat.id in filters.chat(chats=SUPPORT_GROUP): return await message.reply_text(script.SGROUP_TXT.format(message.from_user.mention, total_results, search), disable_web_page_preview=True)
+    elif msg.chat.id in filters.chat(chats=SUPPORT_GROUP): return await message.reply_text(script.SGROUP_TXT.format(message.from_user.mention, total_results, search, temp.U_NAME), disable_web_page_preview=True)
     else:
         btn = [
             [
@@ -1130,72 +1136,20 @@ async def auto_filter(client, msg, spoll=False):
         await msg.message.delete()
 
 async def advantage_spell_chok(msg):
-    query = re.sub(
-        r"\b(pl(i|e)*?(s|z+|ease|se|ese|(e+)s(e)?)|((send|snd|giv(e)?|gib)(\sme)?)|movie(s)?|new|latest|br((o|u)h?)*|^h(e|a)?(l)*(o)*|mal(ayalam)?|t(h)?amil|file|that|find|und(o)*|kit(t(i|y)?)?o(w)?|thar(u)?(o)*w?|kittum(o)*|aya(k)*(um(o)*)?|full\smovie|any(one)|with\ssubtitle(s)?)",
-        "", msg.text, flags=re.IGNORECASE)  # plis contribute some common words
     search = msg.text.replace(" ", "+")
-    query = query.strip() + " movie"
-    g_s = await search_gagala(query)
-    g_s += await search_gagala(msg.text)
-    gs_parsed = []
-    if not g_s:
-        btn = [[
-            InlineKeyboardButton(' ɢᴏᴏɢʟᴇ ', url=f"https://google.com/search?q={search}"),
-            InlineKeyboardButton('ɪᴍᴅʙ', url=f"https://imdb.com/find?q={search}")
-        ]]           
-        k = await msg.reply_photo(photo=SPELL_IMG, caption=script.I_CUDNT, reply_markup=InlineKeyboardMarkup(btn))    
-        await asyncio.sleep(SPL_DELETE_TIME)
-        await k.delete()
-        await msg.delete()
-        return
-    regex = re.compile(r".*(imdb|wikipedia).*", re.IGNORECASE)  # look for imdb / wiki results
-    gs = list(filter(regex.match, g_s))
-    gs_parsed = [re.sub(
-        r'\b(\-([a-zA-Z-\s])\-\simdb|(\-\s)?imdb|(\-\s)?wikipedia|\(|\)|\-|reviews|full|all|episode(s)?|film|movie|series)',
-        '', i, flags=re.IGNORECASE) for i in gs]
-    if not gs_parsed:
-        reg = re.compile(r"watch(\s[a-zA-Z0-9_\s\-\(\)]*)*\|.*",
-                         re.IGNORECASE)  # match something like Watch Niram | Amazon Prime
-        for mv in g_s:
-            match = reg.match(mv)
-            if match:
-                gs_parsed.append(match.group(1))
-    user = msg.from_user.id if msg.from_user else 0
-    movielist = []
-    gs_parsed = list(dict.fromkeys(gs_parsed))  # removing duplicates https://stackoverflow.com/a/7961425
-    if len(gs_parsed) > 3:
-        gs_parsed = gs_parsed[:3]
-    if gs_parsed:
-        for mov in gs_parsed:
-            imdb_s = await get_poster(mov.strip(), bulk=True)  # searching each keyword in imdb
-            if imdb_s:
-                movielist += [movie.get('title') for movie in imdb_s]
-    movielist += [(re.sub(r'(\-|\(|\)|_)', '', i, flags=re.IGNORECASE)).strip() for i in gs_parsed]
-    movielist = list(dict.fromkeys(movielist))  # removing duplicates
-    if not movielist:
-        btn = [[
-            InlineKeyboardButton(' ɢᴏᴏɢʟᴇ ', url=f"https://google.com/search?q={search}"),
-            InlineKeyboardButton('ɪɴsᴛʀᴜᴄᴛɪᴏɴs', callback_data='splmd')
-        ]]           
-        k = await msg.reply_photo(photo=SPELL_IMG, caption=script.CUDNT_FND, reply_markup=InlineKeyboardMarkup(btn))    
-        await asyncio.sleep(SPL_DELETE_TIME)
-        await k.delete()
-        await msg.delete()
-        return
-    SPELL_CHECK[msg.id] = movielist
     btn = [[
         InlineKeyboardButton(
             text="ɪɴsᴛʀᴜᴄᴛɪᴏɴs",
             callback_data="splmd"
         ),
-        InlineKeyboardButton(
-            text="ʀᴇᴘᴏʀᴛ ʜᴇʀᴇ",
-            url=f"t.me/{SUPPORT_CHAT}"
+            InlineKeyboardButton(
+            text="ɢᴏᴏɢʟᴇ",
+            url=f"https://google.com/search?q={search}"
         )
     ],[
         InlineKeyboardButton(
-            text="🕵️ sᴇᴀʀᴄʜ ᴏɴ ɢᴏᴏɢʟᴇ 🕵️",
-            url=f"https://google.com/search?q={search}"
+            text="❓ Hᴏᴡ Tᴏ Dᴏᴡɴʟᴏᴀᴅ ❓",
+            url=HOW_DWLD_LINK
         )
     ]]
     spell_check_del = await msg.reply_photo(
