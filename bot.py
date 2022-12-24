@@ -1,5 +1,3 @@
-import os
-import math
 import logging
 import logging.config
 
@@ -19,12 +17,11 @@ from pyrogram import Client, __version__
 from pyrogram.raw.all import layer
 from database.ia_filterdb import Media
 from database.users_chats_db import db
-from info import SESSION, API_ID, API_HASH, BOT_TOKEN, LOG_STR, LOG_CHANNEL, PORT
+from info import SESSION, API_ID, API_HASH, BOT_TOKEN, LOG_STR, TIMEZONE, LOG_CHANNEL, PORT
 from utils import temp
 from typing import Union, Optional, AsyncGenerator
 from pyrogram import types
 LOGGER = logging.getLogger(__name__)
-TIMEZONE = (os.environ.get("TIMEZONE", "Asia/Kolkata"))
 
 class Bot(Client):
 
@@ -51,6 +48,7 @@ class Bot(Client):
         temp.B_NAME = me.first_name
         temp.B_LINK = me.mention
         self.username = '@' + me.username
+        self.uptime = datetime.now()
         curr = datetime.now(timezone(TIMEZONE))
         date = curr.strftime('%d %B, %Y')
         time = curr.strftime('%I:%M:%S %p')
