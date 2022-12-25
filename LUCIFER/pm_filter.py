@@ -85,7 +85,7 @@ async def next_page(bot, query):
             [
                 InlineKeyboardButton(
                     text=f"[{get_size(file.file_size)}] {file.file_name}", 
-                    url=await get_shortlink(f"https://telegram.me/{temp.U_NAME}?start=files_{file.file_id}")
+                    url=await get_shortlink(f"https://telegram.dog/{temp.U_NAME}?start=files_{file.file_id}")
                 ),
             ]
             for file in files
@@ -95,11 +95,11 @@ async def next_page(bot, query):
             [
                 InlineKeyboardButton(
                     text=f"{file.file_name}", 
-                    url=await get_shortlink(f"https://telegram.me/{temp.U_NAME}?start=files_{file.file_id}")
+                    url=await get_shortlink(f"https://telegram.dog/{temp.U_NAME}?start=files_{file.file_id}")
                 ),
                 InlineKeyboardButton(
                     text=f"{get_size(file.file_size)}", 
-                    url=await get_shortlink(f"https://telegram.me/{temp.U_NAME}?start=files_{file.file_id}")
+                    url=await get_shortlink(f"https://telegram.dog/{temp.U_NAME}?start=files_{file.file_id}")
                 ),
             ]
             for file in files
@@ -1080,7 +1080,7 @@ async def auto_filter(client, msg, spoll=False):
             [
                 InlineKeyboardButton(
                     text=f"[{get_size(file.file_size)}] {file.file_name}", 
-                    url=await get_shortlink(f"https://telegram.me/{temp.U_NAME}?start=files_{file.file_id}")
+                    url=await get_shortlink(f"https://telegram.dog/{temp.U_NAME}?start=files_{file.file_id}")
                 ),
             ]
             for file in files
@@ -1091,11 +1091,11 @@ async def auto_filter(client, msg, spoll=False):
             [
                 InlineKeyboardButton(
                     text=f"{file.file_name}", 
-                    url=await get_shortlink(f"https://telegram.me/{temp.U_NAME}?start=files_{file.file_id}")
+                    url=await get_shortlink(f"https://telegram.dog/{temp.U_NAME}?start=files_{file.file_id}")
                 ),
                 InlineKeyboardButton(
                     text=f"{get_size(file.file_size)}", 
-                    url=await get_shortlink(f"https://telegram.me/{temp.U_NAME}?start=files_{file.file_id}")
+                    url=await get_shortlink(f"https://telegram.dog/{temp.U_NAME}?start=files_{file.file_id}")
                 ),
             ]
             for file in files
